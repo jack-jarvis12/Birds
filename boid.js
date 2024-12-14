@@ -1,24 +1,35 @@
-const SEPARATION_WEIGHT = 2.0;
+const SEPARATION_WEIGHT = 3.0;
 const ALIGNMENT_WEIGHT = 1.0;  
-const COHESION_WEIGHT = 0.8;   
+const COHESION_WEIGHT = 1.0;   
 
 const CURSOR_FORCE_WEIGHT = 0.5;
 
 const ALIGNMENT_DISTANCE = 200;
 const COHESION_DISTANCE = 200;
 
+const BIRD_FRAMES = 7;
+const BIRD_FRAMERATE = 6;
+const BIRD_IDLE_FRAMES = 8;
+const BIRD_IDLE_FRAMERATE = 15;
+
+const LANDING_PROBABILITY = 0.005;
+const FLYING_PROBABILITY = 0.0005;
+
+const MARGIN = 150;
+
 class Boid {
-    constructor(x, y) {
+    constructor(x, y, spriteSet) {
         this.position = { x, y };
         this.velocity = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 };
         this.acceleration = { x: 0, y: 0 };
-        this.maxSpeed = 3;
-        this.maxForce = 0.05;
+        this.maxSpeed = Math.random()*2+1;
+        this.maxForce = Math.random()*0.02+0.03;
         this.size = 5;
         this.state = "flying";
         this.lifespan = 0;
         this.landingPoint = null;
         this.frame = Math.random()*BIRD_FRAMES*BIRD_FRAMERATE;
+        this.spriteSet = spriteSet;
     }
   
     // Update boid's position and velocity
@@ -64,11 +75,8 @@ class Boid {
         );
         
         
-        if (distance < 3) {
+        if (distance <= 3) {
             this.state = "landed";
-            // this.position = this.landingPoint;
-            this.position.x = this.landingPoint.x;
-            this.position.y = this.landingPoint.y;
             this.velocity = {x: 0, y: 0};
             this.acceleration = {x: 0, y: 0};
         } else {
@@ -101,11 +109,10 @@ class Boid {
     }
 
     takeOff(){
-        // console.log(this.landingPoint, landingPoints);
-        // landingPoints.push(this.landingPoint);
-        this.landingPoint = null;
         this.state = "flying";
         this.velocity = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 };
+        landingPoints.push(this.landingPoint);
+        this.landingPoint = null;
     }
   
     // Apply force to the boid
@@ -122,16 +129,16 @@ class Boid {
     render() {
 
         if (this.state == "landed") {
-            ctx.drawImage(birdImageIdle, 0, Math.floor(this.frame/BIRD_IDLE_FRAMERATE)*32, 32, 32, this.position.x-18, this.position.y-35, 38, 38);
+            ctx.drawImage(this.spriteSet.idle, 0, Math.floor(this.frame/BIRD_IDLE_FRAMERATE)*32, 32, 32, this.position.x-18, this.position.y-35, 38, 38);
             this.frame += 1;
             if (this.frame > BIRD_IDLE_FRAMERATE*BIRD_IDLE_FRAMES) {
                 this.frame = 0;
             }
         } else {
             if (this.velocity.x >= 0) {
-                ctx.drawImage(birdImageRight, 0, Math.floor(this.frame/BIRD_FRAMERATE)*600, 800, 600, this.position.x-20, this.position.y-35, 50, 50);
+                ctx.drawImage(this.spriteSet.right, 0, Math.floor(this.frame/BIRD_FRAMERATE)*600, 800, 600, this.position.x-20, this.position.y-35, 50, 50);
             }  else {
-                ctx.drawImage(birdImageLeft, 0, Math.floor(this.frame/BIRD_FRAMERATE)*600, 800, 600, this.position.x-30, this.position.y-35, 50, 50);
+                ctx.drawImage(this.spriteSet.left, 0, Math.floor(this.frame/BIRD_FRAMERATE)*600, 800, 600, this.position.x-30, this.position.y-35, 50, 50);
             }
             this.frame += 1;
             if (this.frame > BIRD_FRAMERATE*BIRD_FRAMES) {
@@ -139,27 +146,31 @@ class Boid {
             }
         }
 
-        // ctx.beginPath();
-        // ctx.arc(this.position.x, this.position.y, this.size, 0, Math.PI * 2);
-        // switch (this.state) {
-        //     case "flying": ctx.fillStyle = "black"; break;
-        //     case "landing": ctx.fillStyle = "orange"; break;
-        //     case "landed": ctx.fillStyle = "red"; break; 
-        // }
-        // ctx.fill();
     }
   
-    // Check if boid is near the edges and wrap around if necessary
+    // Check if boid is near the edges 
     edges() {
-        if (this.position.x > canvas.width+20) this.position.x = 0;
-        if (this.position.x < -20) this.position.x = canvas.width;
-        if (this.position.y > canvas.height+20) this.position.y = 0;
-        if (this.position.y < -20) this.position.y = canvas.height;
+        if (this.position.x > canvas.width-MARGIN) {
+            // this.position.x = 0;
+            this.applyForce({x: -this.maxForce, y: 0});
+        }
+        if (this.position.x < MARGIN) {
+            // this.position.x = canvas.width;
+            this.applyForce({x: this.maxForce, y: 0});
+        }
+        if (this.position.y > canvas.height-MARGIN) {
+            // this.position.y = 0;
+            this.applyForce({x: 0, y: -this.maxForce});
+        }
+        if (this.position.y < MARGIN) {
+            // this.position.y = canvas.height;
+            this.applyForce({x: 0, y: this.maxForce});
+        }
     }
   
     // Compute steering force for separation
     separate(boids) {
-        const desiredSeparation = 25;
+        const desiredSeparation = 40;
         let steer = { x: 0, y: 0 };
         let count = 0;
     
@@ -322,6 +333,7 @@ class Boid {
         x: separation.x * SEPARATION_WEIGHT,
         y: separation.y * SEPARATION_WEIGHT
       });
+      console.log(alignment);
       this.applyForce({
         x: alignment.x * ALIGNMENT_WEIGHT,
         y: alignment.y * ALIGNMENT_WEIGHT

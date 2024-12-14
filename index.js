@@ -1,88 +1,101 @@
-const LANDING_PROBABILITY = 0.005;
-const FLYING_PROBABILITY = 0.0005;
-
-// Set up canvas
 const canvas = document.getElementById("boidsCanvas");
 const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 
-
-// Create a population of boids
-const boids = [];
 let cursor = { x: 0, y: 0 };
-
-// const landingPoints = []
-const landingPoints = [
-    {x: 732, y: 445 },
-    {x: 758, y: 460 },
-    {x: 771, y: 456 },
-    {x: 784, y: 460 },
-    {x: 804, y: 460 },
-    {x: 816, y: 456 },
-    {x: 828, y: 460 },
-    {x: 847, y: 439 },
-    {x: 872, y: 460 },
-    {x: 919, y: 446 },
-    {x: 944, y: 460 },
-    {x: 957, y: 456 },
-    {x: 970, y: 460 },
-    {x: 989, y: 455 },
-    {x: 1005, y: 458 },
-    {x: 1023, y: 458 },
-    {x: 1053, y: 458 },
-    {x: 1074, y: 440 },
-    {x: 1096, y: 460 },
-    {x: 1106, y: 456 },
-    {x: 1117, y: 460 }
-]
-
-const birdImageRight = new Image();
-birdImageRight.src = "birdRight.png";
-const birdImageLeft = new Image();
-birdImageLeft.src = "birdLeft.png";
-const birdImageIdle = new Image();
-birdImageIdle.src = "birdIdle.png";
-
-const BIRD_FRAMES = 7;
-const BIRD_FRAMERATE = 6;
-const BIRD_IDLE_FRAMES = 8;
-const BIRD_IDLE_FRAMERATE = 15;
-
-// for (let i=0; i<30; i++) {
-//     landingPoints.push({x: 400+i*15, y: 400});
-// }
-
-
-
 canvas.addEventListener('mousemove', (event) => {
     cursor.x = event.clientX;
     cursor.y = event.clientY;
-  });
+});
 
-
-// window.addEventListener('click', (event) => {
-//     console.log("{x: "+event.clientX+", y: "+event.clientY+" }, ")
-// });
-
-window.addEventListener('resize', (event) => {
+function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    redraw();
-}, false);
-
-
-for (let i = 0; i < 50; i++) {
-  boids.push(new Boid(Math.random() * canvas.width, Math.random() * canvas.height));
 }
 
-// Animation loop
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+
+const redSpriteSet = {}
+redSpriteSet.right = new Image();
+redSpriteSet.right.src = "sprites/birdRightRed.png";
+redSpriteSet.left = new Image();
+redSpriteSet.left.src = "sprites/birdLeftRed.png";
+redSpriteSet.idle = new Image();
+redSpriteSet.idle.src = "sprites/birdIdleRed.png";
+
+const greenSpriteSet = {}
+greenSpriteSet.right = new Image();
+greenSpriteSet.right.src = "sprites/birdRightGreen.png";
+greenSpriteSet.left = new Image();
+greenSpriteSet.left.src = "sprites/birdLeftGreen.png";
+greenSpriteSet.idle = new Image();
+greenSpriteSet.idle.src = "sprites/birdIdleGreen.png";
+
+const blueSpriteSet = {}
+blueSpriteSet.right = new Image();
+blueSpriteSet.right.src = "sprites/birdRightBlue.png";
+blueSpriteSet.left = new Image();
+blueSpriteSet.left.src = "sprites/birdLeftBlue.png";
+blueSpriteSet.idle = new Image();
+blueSpriteSet.idle.src = "sprites/birdIdleBlue.png";
+
+const orangeSpriteSet = {}
+orangeSpriteSet.right = new Image();
+orangeSpriteSet.right.src = "sprites/birdRightOrange.png";
+orangeSpriteSet.left = new Image();
+orangeSpriteSet.left.src = "sprites/birdLeftOrange.png";
+orangeSpriteSet.idle = new Image();
+orangeSpriteSet.idle.src = "sprites/birdIdleOrange.png";
+
+const pinkSpriteSet = {}
+pinkSpriteSet.right = new Image();
+pinkSpriteSet.right.src = "sprites/birdRightPink.png";
+pinkSpriteSet.left = new Image();
+pinkSpriteSet.left.src = "sprites/birdLeftPink.png";
+pinkSpriteSet.idle = new Image();
+pinkSpriteSet.idle.src = "sprites/birdIdlePink.png";
+
+
+spriteSets = [redSpriteSet, greenSpriteSet, blueSpriteSet, orangeSpriteSet, pinkSpriteSet]
+
+
+function makeBranch(x, y, width, height) {
+    branches.push({x: x, y:y, width:width, height:height});
+    for (let i=x+10; i<x+width; i+=20) {
+        landingPoints.push({x: i, y: y+5});
+    }
+}
+
+landingPoints = []
+branches = []
+
+makeBranch(canvas.width/6, canvas.height/4, canvas.width/2, 10);
+makeBranch(canvas.width*2/6, canvas.height/2, canvas.width/2, 10);
+makeBranch(canvas.width/6, canvas.height*3/4, canvas.width/2, 10);
+
+
+
+boids = [];
+
+for (let i = 0; i < 100; i++) {
+    boids.push(new Boid(
+        Math.random() * canvas.width,
+        Math.random() * canvas.height,
+        spriteSets[Math.floor(Math.random() * spriteSets.length)]
+    ));
+}
+
+
+
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // ctx.fillStyle = "black";
-    // ctx.fillRect(400, 395, 450, 10);
-
+    branches.forEach(branch => {
+        ctx.fillStyle = "black";
+        ctx.fillRect(branch.x, branch.y, branch.width, branch.height);
+    })
+        
     boids.forEach(boid => {
         if (boid.state == "flying") {
             boid.flock(boids);
@@ -98,15 +111,13 @@ function animate() {
             );
             if (Math.random() < FLYING_PROBABILITY || cursorDist < 50) {
                 boid.lifespan = Math.random()*500+300;
-                landingPoints.push(boid.landingPoint);
-                console.log(landingPoints.length)
                 boid.takeOff();
             }
         }
         boid.render();
     });
 
-    requestAnimationFrame(animate);
+    requestAnimationFrame(this.animate);
 }
-
 animate();
+
