@@ -131,7 +131,7 @@ class Boid {
         if (this.state == "landed") {
             ctx.drawImage(this.spriteSet.idle, 0, Math.floor(this.frame/BIRD_IDLE_FRAMERATE)*32, 32, 32, this.position.x-18, this.position.y-35, 38, 38);
             this.frame += 1;
-            if (this.frame > BIRD_IDLE_FRAMERATE*BIRD_IDLE_FRAMES) {
+            if (this.frame > BIRD_IDLE_FRAMERATE*(BIRD_IDLE_FRAMES-1)) {
                 this.frame = 0;
             }
         } else {
@@ -141,7 +141,7 @@ class Boid {
                 ctx.drawImage(this.spriteSet.left, 0, Math.floor(this.frame/BIRD_FRAMERATE)*600, 800, 600, this.position.x-30, this.position.y-35, 50, 50);
             }
             this.frame += 1;
-            if (this.frame > BIRD_FRAMERATE*BIRD_FRAMES) {
+            if (this.frame > BIRD_FRAMERATE*(BIRD_FRAMES-1)) {
                 this.frame = 0;
             }
         }
